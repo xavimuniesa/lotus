@@ -2177,7 +2177,7 @@
       height: calc(var(--top) + env(safe-area-inset-top));
       padding: env(safe-area-inset-top) max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
       display: grid;
-      grid-template-columns: 1fr auto 1fr;
+      grid-template-columns: auto minmax(0, 1fr);
       align-items: center;
       gap: 8px;
       pointer-events: none;
@@ -2187,7 +2187,7 @@
     .tb-left, .tb-right { display: flex; gap: 8px; align-items: center; }
     .tb-left { justify-self: start; position: relative; }
     .tb-right { justify-self: end; }
-    .tb-center { min-width: 0; display: flex; justify-content: center; }
+    .tb-center { min-width: 0; display: flex; justify-content: center; padding-right: 4px; }
 
     .tb-btn,
     .tb-btn.theme-toggle-btn {
@@ -2240,7 +2240,7 @@
 
     .tb-center:has(.ara-sona-fila:not([hidden])) .lema { display: none; }
     .ara-sona-fila { margin-top: 0; }
-    .ara-sona { max-width: min(58vw, 340px); font-size: 0.78rem; padding: 4px 12px 4px 5px; }
+    .ara-sona { max-width: 100%; font-size: 0.78rem; padding: 4px 12px 4px 5px; }
 
     /* Menú d'idiomes */
     .lang-menu {
@@ -2426,18 +2426,16 @@
         --side: calc(max(6px, env(safe-area-inset-left), env(safe-area-inset-right)) + 44px);
       }
       .topbar { display: block; height: 0; padding: 0; }
-      .tb-left, .tb-right { position: fixed; top: calc(50% - 41px); flex-direction: column; gap: 10px; z-index: 41; }
-      .tb-left { left: max(6px, env(safe-area-inset-left)); }
-      .tb-right { right: max(6px, env(safe-area-inset-right)); }
+      .tb-left { position: fixed; top: calc(50% - 64px); flex-direction: column; gap: 10px; z-index: 41; left: max(6px, env(safe-area-inset-left)); }
       .tb-btn, .tb-btn.theme-toggle-btn { width: 36px; height: 36px; }
-      .tb-center { position: fixed; top: 3px; left: 50%; transform: translateX(-50%); z-index: 41; }
+      .tb-center { position: fixed; top: 3px; left: 50%; transform: translateX(-50%); z-index: 41; padding: 0; }
       .lema { font-size: 11px; pointer-events: none; }
       .ara-sona { font-size: 0.7rem; padding: 2px 10px 2px 4px; }
       .lang-menu { position: fixed; top: 8px; left: calc(max(6px, env(safe-area-inset-left)) + 46px); max-height: calc(100dvh - 16px); }
       .lang-menu .lm-in { max-height: calc(100dvh - 26px); }
       .app-container {
         padding-left: var(--side) !important;
-        padding-right: var(--side) !important;
+        padding-right: max(12px, env(safe-area-inset-right)) !important;
         padding-top: calc(var(--top) + 2px);
         gap: 12px;
       }
@@ -2463,6 +2461,10 @@
     <div class="tb-left">
       <button type="button" class="tb-btn tb-lang" id="lang-btn" aria-haspopup="true" aria-expanded="false" data-i18n-aria="langGroup" aria-label="Idioma"><span id="lang-code">CA</span></button>
       <button type="button" class="tb-btn" id="veu-btn" aria-pressed="true"></button>
+      <button type="button" class="tb-btn theme-toggle-btn" id="theme-toggle-btn" title="Canvia entre tema diürn i nocturn" data-i18n-aria="themeAria" aria-label="Tema diürn o nocturn"></button>
+      <button type="button" class="tb-btn theme-toggle-btn" id="install-btn" data-i18n-title="install" data-i18n-aria="install" title="Instal·la com a app" aria-label="Instal·la com a app" hidden>
+        <svg class="theme-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></svg>
+      </button>
       <div class="lang-menu" id="lang-menu" role="menu" hidden><div class="lm-in" id="lang-list"></div></div>
     </div>
     <div class="tb-center" id="tb-center">
@@ -2471,12 +2473,6 @@
           <span class="ara-sona-ic" id="ara-sona-ic"></span><span class="ara-sona-tx" id="ara-sona-tx"></span>
         </button>
       </div>
-    </div>
-    <div class="tb-right">
-      <button type="button" class="tb-btn theme-toggle-btn" id="install-btn" data-i18n-title="install" data-i18n-aria="install" title="Instal·la com a app" aria-label="Instal·la com a app" hidden>
-        <svg class="theme-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></svg>
-      </button>
-      <button type="button" class="tb-btn theme-toggle-btn" id="theme-toggle-btn" title="Canvia entre tema diürn i nocturn" data-i18n-aria="themeAria" aria-label="Tema diürn o nocturn"></button>
     </div>
   </header>
 
@@ -3811,7 +3807,7 @@
           if (weatherViewActive) shiftFinPage(amount > 0 ? 1 : -1);
           return;
         }
-        if (amount > 0) setWeatherView(true, 'up');
+        setWeatherView(true, amount > 0 ? 'up' : 'down');
       }, { passive: false });
 
       // Teclat: ↓ obre les finestres, ↑ o Esc tornen al calendari, ← → passen finestres o mesos
@@ -3828,6 +3824,7 @@
           } else return;
         } else {
           if (e.key === 'ArrowDown') setWeatherView(true, 'up');
+          else if (e.key === 'ArrowUp') setWeatherView(true, 'down');
           else if (e.key === 'ArrowRight') shiftCalendarMonth(1);
           else if (e.key === 'ArrowLeft') shiftCalendarMonth(-1);
           else return;
@@ -3920,11 +3917,17 @@
         //  - a una finestra, el contingut es desplaça com una cinta; si ja era al
         //    principi, torna al calendari.
         if (Math.abs(deltaY) >= SWIPE_THRESHOLD && Math.abs(deltaY) > Math.abs(deltaX)) {
+          const dir = deltaY > 0 ? 'down' : 'up';
           if (!weatherViewActive) {
-            if (deltaY > 0) setWeatherView(true, 'down');
-          } else if (deltaY > 0) {
+            // Al calendari: lliscar amunt o avall obre les finestres
+            setWeatherView(true, dir);
+          } else {
+            // A les finestres: avall des del principi, o amunt des del final (o si no hi ha res a desplaçar), torna al calendari
             const page = currentFinPage();
-            if (startScrollTop <= 0 && (!page || page.scrollTop <= 0)) setWeatherView(false, 'down');
+            const room = page ? page.scrollHeight - page.clientHeight : 0;
+            const atTop = !page || (startScrollTop <= 0 && page.scrollTop <= 0);
+            const atBottom = !page || room <= 2 || (Math.abs(page.scrollTop - startScrollTop) < 2 && page.scrollTop >= room - 2);
+            if ((deltaY > 0 && atTop) || (deltaY < 0 && atBottom)) setWeatherView(false, dir);
           }
           return;
         }
