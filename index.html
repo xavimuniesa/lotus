@@ -136,12 +136,27 @@
     }
 
     /* Zz: agulles, marques horàries i minuteres i la marca, en vermell taronja intens;
-       la resta de l'esfera (anell, fons, subesferes, caixa) més apagada i difuminada */
-    html[data-theme="zz"] .face-svg .dim { opacity: 0.34; filter: blur(0.6px); }
-    html[data-theme="zz"] .face-svg .hot { filter: brightness(1.7) contrast(1.15); }
+       la resta de l'esfera (anell, fons, subesferes, caixa) més apagada.
+       Només opacitat i colors de farciment (Safari no aplica filtres CSS dins d'un SVG):
+       el filtre Zz de la cara converteix la lluminositat en #ff4a1c, així el blanc surt a ple color. */
+    html[data-theme="zz"] .face-svg .dim { opacity: 0.5; }
+    html[data-theme="zz"] .face-svg .hot [fill^="url(#wHandG"],
+    html[data-theme="zz"] .face-svg .hot [fill^="url(#lHandG"],
+    html[data-theme="zz"] .face-svg .hot [fill^="url(#wOrg"],
+    html[data-theme="zz"] .face-svg .hot [fill^="url(#lBlue"],
+    html[data-theme="zz"] .face-svg .hot [fill^="url(#wHub"] { fill: #dcdcdc; }
+    html[data-theme="zz"] .face-svg .hot [fill^="url(#wLume"],
+    html[data-theme="zz"] .face-svg .hot [fill^="url(#lLume"],
+    html[data-theme="zz"] .face-svg .hot [fill^="url(#wWhite"],
+    html[data-theme="zz"] .face-svg .hot [fill^="url(#lRed"] { fill: #ffffff; }
+    html[data-theme="zz"] .face-svg .hot [stroke^="url(#lBlue"] { stroke: #fff; }
+    html[data-theme="zz"] .case-body { opacity: 0.35; }
+    /* Sense desenfocaments de fons als botons i finestres: es veurien borrosos */
+    html[data-theme="zz"] .tb-btn,
+    html[data-theme="zz"] .chrono-bar,
+    html[data-theme="zz"] .calendar-section { -webkit-backdrop-filter: none; backdrop-filter: none; }
     .zz-base { display: none; }
     html[data-theme="zz"] .zz-base { display: inline; }
-    html[data-theme="zz"] .case-body { opacity: 0.3; }
     html[data-theme="zz"] .face-svg circle[fill^="url(#wDial"],
     html[data-theme="zz"] .face-svg circle[fill^="url(#lDial"] { fill: #000; }
 
@@ -2711,9 +2726,9 @@
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
     <filter id="zz-tint" color-interpolation-filters="sRGB">
       <feColorMatrix type="matrix" values="
-        0.2018 0.6794 0.0686 0 0
-        0.0585 0.1970 0.0199 0 0
-        0.0222 0.0747 0.0075 0 0
+        0.2139 0.7202 0.0727 0 0
+        0.0620 0.2089 0.0211 0 0
+        0.0235 0.0792 0.0080 0 0
         0      0      0      1 0"/>
     </filter>
   </svg>
@@ -4890,8 +4905,10 @@
         // Horitzontal: el rellotge cedeix protagonisme i el calendari creix (zoom > 1)
         watch = Math.min((innerH - barH) * BOX_SLACK * 0.84, WATCH_MAX, innerW * 0.5);
         watch = Math.max(Math.min(WATCH_MIN, innerH - barH), watch);
-        zoom = Math.min(1.85, innerH * 0.92 / calH, (innerW - watch - gap - 8) / calW);
-        if (zoom < 1) watch = Math.min(innerH * BOX_SLACK, WATCH_MAX, innerW - calW * zoom - gap);
+        // la barra del cronòmetre (si és oberta) pot ser més ampla que el rellotge
+        const barW = open && bar ? Math.min(bar.scrollWidth, 330) : 0;
+        zoom = Math.min(1.85, innerH * 0.92 / calH, (innerW - Math.max(watch, barW) - gap - 8) / calW);
+        if (zoom < 1) watch = Math.min((innerH - barH) * BOX_SLACK, WATCH_MAX, innerW - calW * zoom - gap);
       }
       // Finestres de dades: a l'horitzontal s'estiren en alçada (no retallen alarmes, ràdios...)
       const views = document.getElementById('cal-views');
