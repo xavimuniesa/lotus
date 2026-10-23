@@ -2264,7 +2264,22 @@
     html[data-theme="zz"] .lema span { color: var(--accent); }
 
     .tb-center:has(.ara-sona-fila:not([hidden])) .lema { display: none; }
-    .ara-sona-fila { margin-top: 0; }
+    .ara-sona-fila { margin-top: 0; gap: 6px; min-width: 0; max-width: 100%; }
+    .ara-sona { flex: 0 1 auto; }
+    .sleep-btn {
+      flex: none;
+      padding: 4px 11px 4px 9px;
+      gap: 5px;
+      background: transparent;
+      color: var(--accent);
+      box-shadow: inset 0 0 0 1.5px var(--accent);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .sleep-btn svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .sleep-btn.on { background: var(--accent); color: var(--accent-text); }
+    .sleep-btn.fading { animation: sleepPulse 1s ease-in-out infinite; }
+    @keyframes sleepPulse { 50% { opacity: 0.45; } }
     .ara-sona { max-width: 100%; font-size: 0.78rem; padding: 4px 12px 4px 5px; }
 
     /* Menú d'idiomes */
@@ -2529,6 +2544,9 @@
       <div class="ara-sona-fila" id="ara-sona-fila" hidden>
         <button type="button" class="ara-sona" id="ara-sona" data-i18n-aria="pausePlay" aria-label="Pausar o reprendre">
           <span class="ara-sona-ic" id="ara-sona-ic"></span><span class="ara-sona-tx" id="ara-sona-tx"></span>
+        </button>
+        <button type="button" class="ara-sona sleep-btn" id="sleep-btn" data-i18n-aria="sleepAria" aria-label="Temporitzador d'apagada">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 9.6A5.6 5.6 0 0 1 6.4 3a5.6 5.6 0 1 0 6.6 6.6z"/></svg><span id="sleep-tx">Off</span>
         </button>
       </div>
     </div>
@@ -3021,11 +3039,11 @@
     }
 
     // Textos de les tecles del cronògraf
-    Object.assign(I18N.ca, { chronoStart: 'Cronògraf: engega o atura', chronoReset: 'Cronògraf: LAP / posa a zero', chronoBar: 'Corona: mostra o amaga el cronòmetre', flipLbl: 'Gira el rellotge', prevM: 'Mes anterior', nextM: 'Mes següent' });
-    Object.assign(I18N.fr, { chronoStart: 'Chronographe : marche / arrêt', chronoReset: 'Chronographe : tour / remise à zéro', chronoBar: 'Couronne : afficher ou masquer le chronomètre', flipLbl: 'Retourner la montre', prevM: 'Mois précédent', nextM: 'Mois suivant' });
-    Object.assign(I18N.de, { chronoStart: 'Stoppuhr: Start / Stopp', chronoReset: 'Stoppuhr: Runde / Nullstellung', chronoBar: 'Krone: Stoppuhr ein- oder ausblenden', flipLbl: 'Uhr wenden', prevM: 'Vorheriger Monat', nextM: 'Nächster Monat' });
-    Object.assign(I18N.it, { chronoStart: 'Cronografo: avvio / arresto', chronoReset: 'Cronografo: giro / azzeramento', chronoBar: 'Corona: mostra o nascondi il cronometro', flipLbl: "Gira l'orologio", prevM: 'Mese precedente', nextM: 'Mese successivo' });
-    Object.assign(I18N.en, { chronoStart: 'Chronograph: start / stop', chronoReset: 'Chronograph: lap / reset', chronoBar: 'Crown: show or hide the stopwatch', flipLbl: 'Turn the watch over', prevM: 'Previous month', nextM: 'Next month' });
+    Object.assign(I18N.ca, { chronoStart: 'Cronògraf: engega o atura', chronoReset: 'Cronògraf: LAP / posa a zero', chronoBar: 'Corona: mostra o amaga el cronòmetre', flipLbl: 'Gira el rellotge', prevM: 'Mes anterior', sleepAria: 'Temporitzador d\'apagada', nextM: 'Mes següent' });
+    Object.assign(I18N.fr, { chronoStart: 'Chronographe : marche / arrêt', chronoReset: 'Chronographe : tour / remise à zéro', chronoBar: 'Couronne : afficher ou masquer le chronomètre', flipLbl: 'Retourner la montre', prevM: 'Mois précédent', sleepAria: 'Minuterie d\'arrêt', nextM: 'Mois suivant' });
+    Object.assign(I18N.de, { chronoStart: 'Stoppuhr: Start / Stopp', chronoReset: 'Stoppuhr: Runde / Nullstellung', chronoBar: 'Krone: Stoppuhr ein- oder ausblenden', flipLbl: 'Uhr wenden', prevM: 'Vorheriger Monat', sleepAria: 'Einschlaf-Timer', nextM: 'Nächster Monat' });
+    Object.assign(I18N.it, { chronoStart: 'Cronografo: avvio / arresto', chronoReset: 'Cronografo: giro / azzeramento', chronoBar: 'Corona: mostra o nascondi il cronometro', flipLbl: "Gira l'orologio", prevM: 'Mese precedente', sleepAria: 'Timer di spegnimento', nextM: 'Mese successivo' });
+    Object.assign(I18N.en, { chronoStart: 'Chronograph: start / stop', chronoReset: 'Chronograph: lap / reset', chronoBar: 'Crown: show or hide the stopwatch', flipLbl: 'Turn the watch over', prevM: 'Previous month', sleepAria: 'Sleep timer', nextM: 'Next month' });
 
     function pad2(n) { return String(n).padStart(2, '0'); }
     function isoOf(date) { return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`; }
@@ -4200,6 +4218,7 @@
         document.getElementById('ara-sona-tx').textContent = nowPlaying.titol + (nowPlaying.sub ? ' · ' + nowPlaying.sub : '');
       }
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = nowPlaying ? (playing ? 'playing' : 'paused') : 'none';
+      if (!nowPlaying && typeof sleepReset === 'function') sleepReset();
     }
 
     // Fluxos HLS (.m3u8): Safari els reprodueix directament; als altres
@@ -4345,9 +4364,78 @@
       if (!nowPlaying || hls || !player.getAttribute('src')) return;
       streamFailed(nowPlaying);
     });
+    // ---- Temporitzador d'apagada: desactivat → 15 → 30 → 45 → 60 → 90 min ----
+    // En acabar, el so baixa a poc a poc (FADE_MS) i després s'atura. A l'iPhone el
+    // volum de l'element d'àudio no es pot canviar: allà s'atura sense baixada.
+    const SLEEP_STEPS = [0, 15, 30, 45, 60, 90];
+    const FADE_MS = 10000;
+    let sleepIdx = 0, sleepEnd = 0, sleepTick = null, fadeTimer = null;
+    const volumeWorks = (() => { try { const a = new Audio(); a.volume = 0.5; return a.volume === 0.5; } catch (e) { return false; } })();
+
+    function sleepUpdateUI(now = Date.now()) {
+      const btn = document.getElementById('sleep-btn');
+      const tx = document.getElementById('sleep-tx');
+      if (!btn) return;
+      const on = sleepIdx > 0;
+      btn.classList.toggle('on', on);
+      btn.classList.toggle('fading', !!fadeTimer);
+      let label = 'Off';
+      if (on) label = Math.max(1, Math.ceil((sleepEnd - now) / 60000)) + ' min';
+      if (tx.textContent !== label) tx.textContent = label;
+      btn.setAttribute('aria-label', t('sleepAria') + ': ' + label);
+    }
+    function sleepCancelFade() {
+      if (fadeTimer) { clearInterval(fadeTimer); fadeTimer = null; }
+      try { player.volume = 1; } catch (e) {}
+    }
+    function sleepReset() {
+      sleepIdx = 0; sleepEnd = 0;
+      if (sleepTick) { clearInterval(sleepTick); sleepTick = null; }
+      sleepCancelFade();
+      sleepUpdateUI();
+    }
+    function sleepFinish() {
+      sleepReset();
+      player.pause();
+      try { player.volume = 1; } catch (e) {}
+    }
+    function sleepStartFade() {
+      if (sleepTick) { clearInterval(sleepTick); sleepTick = null; }
+      if (player.paused || !volumeWorks) { sleepFinish(); return; }
+      const t0 = Date.now();
+      fadeTimer = setInterval(() => {
+        const p = Math.min(1, (Date.now() - t0) / FADE_MS);
+        try { player.volume = Math.max(0, (1 - p) * (1 - p)); } catch (e) {}
+        if (p >= 1) sleepFinish();
+      }, 100);
+      sleepUpdateUI();
+    }
+    function sleepCheck() {
+      const now = Date.now();
+      if (sleepIdx > 0 && !fadeTimer && now >= sleepEnd) { sleepStartFade(); return; }
+      sleepUpdateUI(now);
+    }
+    function sleepSet(idx) {
+      sleepCancelFade();
+      sleepIdx = idx;
+      if (sleepTick) { clearInterval(sleepTick); sleepTick = null; }
+      if (idx > 0) {
+        sleepEnd = Date.now() + SLEEP_STEPS[idx] * 60000;
+        sleepTick = setInterval(sleepCheck, 1000);
+      } else sleepEnd = 0;
+      sleepUpdateUI();
+    }
+    document.getElementById('sleep-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      sleepSet((sleepIdx + 1) % SLEEP_STEPS.length);
+      if (typeof click === 'function') click(false);
+    });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && sleepIdx > 0) sleepCheck(); });
+
     document.getElementById('ara-sona').addEventListener('click', (e) => {
       e.stopPropagation();
       if (!nowPlaying) return;
+      if (fadeTimer) { sleepReset(); return; }
       if (player.paused) player.play().catch(() => {}); else player.pause();
     });
     if ('mediaSession' in navigator) {
