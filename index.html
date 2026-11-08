@@ -4099,9 +4099,14 @@
     const HANDS_W = { hour: $('w-hour'), min: $('w-min'), sec: $('w-sec'), h24: $('w-h24'), c30: $('w-c30'), chrono: $('w-chrono') };
     const HANDS_L = { hour: $('l-hour'), min: $('l-min'), sec: $('l-sec'), h24: $('l-h24'), c30: $('l-c30'), chrono: $('l-chrono') };
     let lastStep = -1;
+    const WATCH_FLIP = document.getElementById('watchFlip');
 
-    function rot(el, deg) {
-      el.setAttribute('transform', 'rotate(' + (Math.round(deg * 100) / 100) + ')');
+    function rot(el, deg, q) {
+      const k = q || 100;
+      const v = 'rotate(' + (Math.round(deg * k) / k) + ')';
+      if (el.__rot === v) return;          // sense canvi: no s'invalida res i no es repinta
+      el.__rot = v;
+      el.setAttribute('transform', v);
     }
 
     const CHRONO_KEY = 'wdlt_chrono_v2';
@@ -4219,6 +4224,7 @@
       saveChrono();
       lastStep = -1;
       updateChronoBar(now);
+      kickWatch();
     }
     function chronoAnimating() { return !!(catchAnim || resetAnim); }
 
@@ -4295,18 +4301,27 @@
         const sQ = s + Math.floor(ms * BEATS_PER_SECOND / 1000) / BEATS_PER_SECOND;
         const minC = mi + (s + ms / 1000) / 60;
 
+        // Només es mouen les agulles de la cara que es veu (les dues mentre gira)
+        const turning = WATCH_FLIP.classList.contains('flipping');
+        const backShown = document.documentElement.getAttribute('data-face') === 'back';
+        const doW = turning || !backShown, doL = turning || backShown;
+
         // Woodenson (automàtic)
-        rot(HANDS_W.hour, ((h % 12) + minC / 60) * 30);
-        rot(HANDS_W.min, minC * 6);
-        rot(HANDS_W.sec, sQ * 6);
-        rot(HANDS_W.h24, (h + minC / 60) * 15);
+        if (doW) {
+          rot(HANDS_W.hour, ((h % 12) + minC / 60) * 30, 10);
+          rot(HANDS_W.min, minC * 6, 10);
+          rot(HANDS_W.sec, sQ * 6);
+          rot(HANDS_W.h24, (h + minC / 60) * 15, 10);
+        }
 
         // Lotus (quars): pas d'un segon
         const minL = mi + s / 60;
-        rot(HANDS_L.hour, ((h % 12) + minL / 60) * 30);
-        rot(HANDS_L.min, minL * 6);
-        rot(HANDS_L.sec, s * 6);
-        rot(HANDS_L.h24, (h + minL / 60) * 15);
+        if (doL) {
+          rot(HANDS_L.hour, ((h % 12) + minL / 60) * 30, 10);
+          rot(HANDS_L.min, minL * 6, 10);
+          rot(HANDS_L.sec, s * 6);
+          rot(HANDS_L.h24, (h + minL / 60) * 15, 10);
+        }
 
         // Cronògraf (compartit)
         const e = displayMs(now);
@@ -4318,15 +4333,29 @@
           A = { sec: go('sec'), min: go('min'), minJ: go('min') };
           if (t >= 1) resetAnim = null;
         }
-        rot(HANDS_W.chrono, A.sec); rot(HANDS_W.c30, A.min);
-        rot(HANDS_L.chrono, A.sec); rot(HANDS_L.c30, A.minJ);
+        if (doW) { rot(HANDS_W.chrono, A.sec); rot(HANDS_W.c30, A.min); }
+        if (doL) { rot(HANDS_L.chrono, A.sec); rot(HANDS_L.c30, A.minJ); }
 
         updateChronoBar(now);
         checkDateChange(nowD);
       }
 
-      requestAnimationFrame(updateWatch);
+      scheduleWatch();
     }
+
+    let watchTimer = 0, watchRaf = 0;
+    function scheduleWatch() {
+      if (document.hidden) return;                       // en segon pla no es fa res
+      if (chronoAnimating()) { watchRaf = requestAnimationFrame(updateWatch); return; }
+      const beat = 1000 / BEATS_PER_SECOND;
+      watchTimer = setTimeout(updateWatch, beat - (Date.now() % beat) + 2);
+    }
+    function kickWatch() {
+      clearTimeout(watchTimer); cancelAnimationFrame(watchRaf);
+      lastStep = -1;
+      updateWatch();
+    }
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) kickWatch(); });
 
     // ------------------------------------------------------------------
     // Calendari mensual
@@ -5838,7 +5867,7 @@
       }, nextMidnight - now);
     })();
 
-    requestAnimationFrame(updateWatch);
+    kickWatch();
 
     // ------------------------------------------------------------------
     // Temes: diürn, nocturn i Zz (nocturn negre i taronja, com el mode
