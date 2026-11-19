@@ -6,7 +6,7 @@
 //   sempre van a la xarxa i l'app ja té la seva pròpia memòria per als festius.
 // Canvia CACHE_VERSION quan modifiquis els fitxers per forçar una còpia nova.
 
-const CACHE_VERSION = 'wdlt-v15';
+const CACHE_VERSION = 'wdlt-v17';
 const APP_SHELL = [
   './',
   './index.html',
@@ -46,8 +46,11 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_VERSION).then((cache) => cache.put('./index.html', copy));
+          // Només es desa una pàgina bona (mai un error del servidor)
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_VERSION).then((cache) => cache.put('./index.html', copy));
+          }
           return response;
         })
         .catch(() => caches.match('./index.html'))
