@@ -2752,6 +2752,18 @@
     }
     html[data-theme="zz"][data-zz="green"] .calendar-day-cell.holiday::before { background: #2c9e5f; }
     html[data-theme="zz"][data-zz="green"] .data-alert { background: #278d54; color: #fff; }
+    html[data-theme="zz"][data-zz="cyan"] {
+      --text: #3cdce6; --panel-border: rgba(60, 220, 230, 0.16); --weekday-color: #24848a; --cell-color: #3cdce6;
+      --weekend-color: #31b4bd; --month-title-color: #50e0e8; --data-item-border: rgba(60, 220, 230, 0.16);
+      --data-label-color: #24848a; --data-value-color: #3cdce6; --data-location-color: #289198;
+      --today-btn-border: rgba(60, 220, 230, 0.3); --theme-btn-border: rgba(60, 220, 230, 0.3); --accent: #50e0e8;
+      --btn-hover-bg: rgba(60, 220, 230, 0.08); --today-ring: #3cdce6; --today-ring-glow: rgba(60, 220, 230, 0.45); --tip-bg: #3cdce6;
+      --alert: #3cdce6; --rain-color: #35c2ca;
+      --btn-border: rgba(60, 220, 230, 0.32); --btn-ink: #3cdce6; --muted: #24848a; --menu-bg: #020909;
+      --cell-bg: rgba(60, 220, 230, 0.06); --weekend-tint: rgba(60, 220, 230, 0.05); --panel-border: rgba(60, 220, 230, 0.2);
+    }
+    html[data-theme="zz"][data-zz="cyan"] .calendar-day-cell.holiday::before { background: #2b9ea6; }
+    html[data-theme="zz"][data-zz="cyan"] .data-alert { background: #268d93; color: #fff; }
     html[data-theme="zz"][data-zz="blue"] {
       --text: #4aa6ff; --panel-border: rgba(74, 166, 255, 0.16); --weekday-color: #2c6499; --cell-color: #4aa6ff;
       --weekend-color: #3d88d1; --month-title-color: #5cafff; --data-item-border: rgba(74, 166, 255, 0.16);
@@ -2764,6 +2776,18 @@
     }
     html[data-theme="zz"][data-zz="blue"] .calendar-day-cell.holiday::before { background: #3578b8; }
     html[data-theme="zz"][data-zz="blue"] .data-alert { background: #2f6aa3; color: #fff; }
+    html[data-theme="zz"][data-zz="violet"] {
+      --text: #aa78ff; --panel-border: rgba(170, 120, 255, 0.16); --weekday-color: #664899; --cell-color: #aa78ff;
+      --weekend-color: #8b62d1; --month-title-color: #b286ff; --data-item-border: rgba(170, 120, 255, 0.16);
+      --data-label-color: #664899; --data-value-color: #aa78ff; --data-location-color: #704fa8;
+      --today-btn-border: rgba(170, 120, 255, 0.3); --theme-btn-border: rgba(170, 120, 255, 0.3); --accent: #b286ff;
+      --btn-hover-bg: rgba(170, 120, 255, 0.08); --today-ring: #aa78ff; --today-ring-glow: rgba(170, 120, 255, 0.45); --tip-bg: #aa78ff;
+      --alert: #aa78ff; --rain-color: #966ae0;
+      --btn-border: rgba(170, 120, 255, 0.32); --btn-ink: #aa78ff; --muted: #664899; --menu-bg: #07050a;
+      --cell-bg: rgba(170, 120, 255, 0.06); --weekend-tint: rgba(170, 120, 255, 0.05); --panel-border: rgba(170, 120, 255, 0.2);
+    }
+    html[data-theme="zz"][data-zz="violet"] .calendar-day-cell.holiday::before { background: #7a56b8; }
+    html[data-theme="zz"][data-zz="violet"] .data-alert { background: #6d4da3; color: #fff; }
     /* ---- Diàlegs (drecera de l'iPhone, aniversari) ---- */
     .dialeg {
       position: fixed;
@@ -6815,12 +6839,17 @@
 
     // ---- Mode Zz amb colors: un toc al rellotge en canvia el to; un doble toc el gira ----
     // Cinc tons i dotze combinacions de dos colors: [principal, halo]
-    const ZZ_TINTS = { orange: [255, 74, 28], lume: [226, 235, 178], red: [255, 50, 70], yellow: [242, 197, 61], green: [61, 220, 132], blue: [74, 166, 255] };
+    const ZZ_TINTS = { orange: [255, 74, 28], red: [255, 50, 70], yellow: [242, 197, 61], lume: [226, 235, 178],
+                       green: [61, 220, 132], cyan: [60, 220, 230], blue: [74, 166, 255], violet: [170, 120, 255] };
+    // Combinacions de dos colors [agulles i marques, halo i contracolor], triades del catàleg
     const ZZ_DUOS = {};
-    [['orange', 'yellow'], ['orange', 'green'], ['orange', 'blue'], ['red', 'green'], ['red', 'blue'], ['yellow', 'orange'],
-     ['yellow', 'red'], ['yellow', 'blue'], ['green', 'orange'], ['blue', 'orange'], ['blue', 'yellow'], ['blue', 'green']]
-      .forEach((d, i) => { ZZ_DUOS['duo' + (i + 1)] = d; });
-    const ZZ_ORDER = ['orange', 'lume', 'red', 'yellow', 'green', 'blue', ...Object.keys(ZZ_DUOS)];
+    [['orange', 'cyan'], ['orange', 'blue'], ['orange', 'violet'], ['red', 'violet'],
+     ['yellow', 'green'], ['yellow', 'cyan'], ['yellow', 'blue'], ['yellow', 'violet'],
+     ['lume', 'red'], ['lume', 'green'], ['lume', 'cyan'], ['lume', 'blue'], ['lume', 'violet'],
+     ['green', 'red'], ['green', 'cyan'], ['green', 'blue'], ['green', 'violet'], ['cyan', 'green']]
+      .forEach(([a, b]) => { ZZ_DUOS[`duo-${a}-${b}`] = [a, b]; });
+    // Ordre en tocar el rellotge: els d'un sol color i després els de dos
+    const ZZ_ORDER = ['orange', 'yellow', 'lume', 'green', 'cyan', 'blue', ...Object.keys(ZZ_DUOS)];
     const ZZ_KEY = 'wdlt_zz_tint';
     // Colors de la pantalla per als modes de dos colors (principal A, accent B)
     (function zzDuoStyles() {
@@ -6945,7 +6974,7 @@
         ['watch', 'El rellotge', ["Un toc a l'esfera la gira: Woodenson ↔ Lotus.", 'Corona: mostra o amaga la barra del cronòmetre. Polsadors: START/STOP i LAP/0.', 'Les dues esferes marquen sempre l\'hora real.']],
         ['swipe', 'Les finestres', ['Dit amunt o avall al calendari: obre o tanca les finestres.', 'Dit de costat: canvia de finestra (o de mes, al calendari).', 'Previsió del temps · Avui · Sol i lluna · Sant i efemèride · Properament · Aire · Alarmes · Ràdio · Podcasts · Notícies.']],
         ['cal', 'El calendari', ['Festius en vermell: toca\'ls per veure\'n el nom.', '«Avui» o doble toc al títol: torna al mes actual.', 'Les festes, només en català (amb les locals del municipi).']],
-        ['moon', 'Temes i mode Zz', ['Botó del sol: automàtic (A) → dia → nit → Zz.', 'Zz: un toc a l\'esfera canvia el color (6 colors i 12 combinacions de dos colors amb halo); doble toc: gira el rellotge.', 'Dit amunt o avall damunt l\'esfera (o la roda del ratolí): intensitat del color.']],
+        ['moon', 'Temes i mode Zz', ['Botó del sol: automàtic (A) → dia → nit → Zz.', 'Zz: un toc a l\'esfera canvia el color (6 colors i 18 combinacions de dos colors amb halo); doble toc: gira el rellotge.', 'Dit amunt o avall damunt l\'esfera (o la roda del ratolí): intensitat del color.']],
         ['row', 'La barra de dalt', ['Idioma: CA · FR · DE · IT · EN.', 'Altaveu: activa o silencia l\'anunci de l\'hora en punt.', 'Quan sona la ràdio o un podcast, «Ara sona»: pausa i temporitzador (15–90 min, amb baixada gradual del volum).']],
         ['bell', 'Alarmes', ['Toca l\'hora per canviar-la i tria els dies.', 'Sonen amb l\'app oberta.']],
         ['radio', 'Ràdio, podcasts i notícies', ['Emissores i notícies de l\'idioma triat.', 'Podcasts de RAC1 (en català).']],
@@ -6955,7 +6984,7 @@
         ['watch', 'La montre', ['Touchez le cadran pour le retourner : Woodenson ↔ Lotus.', 'Couronne : affiche ou masque la barre du chronomètre. Poussoirs : START/STOP et LAP/0.', 'Les deux cadrans indiquent toujours l\'heure réelle.']],
         ['swipe', 'Les fenêtres', ['Doigt vers le haut ou le bas sur le calendrier : ouvre ou ferme les fenêtres.', 'Doigt sur le côté : change de fenêtre (ou de mois, au calendrier).', 'Météo · Aujourd\'hui · Soleil et lune · Saint et éphéméride · À venir · Air · Réveils · Radio · Actualités.']],
         ['cal', 'Le calendrier', ['« Auj. » ou double toucher sur le titre : retour au mois actuel.', 'Les jours fériés ne s\'affichent qu\'en catalan.']],
-        ['moon', 'Thèmes et mode Zz', ['Bouton soleil : automatique (A) → jour → nuit → Zz.', 'Zz : un toucher sur le cadran change la couleur (6 couleurs et 12 combinaisons de deux couleurs avec halo) ; double toucher : retourne la montre.', 'Doigt vers le haut ou le bas sur le cadran (ou molette) : intensité de la couleur.']],
+        ['moon', 'Thèmes et mode Zz', ['Bouton soleil : automatique (A) → jour → nuit → Zz.', 'Zz : un toucher sur le cadran change la couleur (6 couleurs et 18 combinaisons de deux couleurs avec halo) ; double toucher : retourne la montre.', 'Doigt vers le haut ou le bas sur le cadran (ou molette) : intensité de la couleur.']],
         ['row', 'La barre du haut', ['Langue : CA · FR · DE · IT · EN.', 'Haut-parleur : active ou coupe l\'annonce de l\'heure.', 'Radio ou podcast en cours : pause et minuterie (15–90 min, volume baissé progressivement).']],
         ['bell', 'Réveils', ['Touchez l\'heure et choisissez les jours.', 'Ils sonnent avec l\'app ouverte.']],
         ['radio', 'Radio et actualités', ['Stations et actualités de la langue choisie.']],
@@ -6965,7 +6994,7 @@
         ['watch', 'Die Uhr', ['Ein Tippen auf das Zifferblatt dreht es: Woodenson ↔ Lotus.', 'Krone: Stoppuhr-Leiste ein- oder ausblenden. Drücker: START/STOPP und LAP/0.', 'Beide Zifferblätter zeigen immer die echte Zeit.']],
         ['swipe', 'Die Fenster', ['Finger nach oben oder unten auf dem Kalender: Fenster öffnen oder schließen.', 'Finger zur Seite: nächstes Fenster (oder Monat im Kalender).', 'Wetter · Heute · Sonne und Mond · Heilige und Chronik · Demnächst · Luft · Wecker · Radio · Nachrichten.']],
         ['cal', 'Der Kalender', ['„Heute“ oder Doppeltippen auf den Titel: zurück zum aktuellen Monat.', 'Feiertage werden nur auf Katalanisch angezeigt.']],
-        ['moon', 'Modi und Zz-Modus', ['Sonnen-Taste: automatisch (A) → Tag → Nacht → Zz.', 'Zz: Tippen auf das Zifferblatt wechselt die Farbe (6 Farben und 12 Zweifarben-Kombinationen mit Lichthof); Doppeltippen dreht die Uhr.', 'Finger nach oben oder unten auf dem Zifferblatt (oder Mausrad): Farbintensität.']],
+        ['moon', 'Modi und Zz-Modus', ['Sonnen-Taste: automatisch (A) → Tag → Nacht → Zz.', 'Zz: Tippen auf das Zifferblatt wechselt die Farbe (6 Farben und 18 Zweifarben-Kombinationen mit Lichthof); Doppeltippen dreht die Uhr.', 'Finger nach oben oder unten auf dem Zifferblatt (oder Mausrad): Farbintensität.']],
         ['row', 'Die obere Leiste', ['Sprache: CA · FR · DE · IT · EN.', 'Lautsprecher: Zeitansage zur vollen Stunde ein- oder ausschalten.', 'Läuft Radio oder Podcast: Pause und Sleep-Timer (15–90 Min., Lautstärke sinkt langsam).']],
         ['bell', 'Wecker', ['Uhrzeit antippen und Tage wählen.', 'Sie klingeln bei geöffneter App.']],
         ['radio', 'Radio und Nachrichten', ['Sender und Nachrichten der gewählten Sprache.']],
@@ -6975,7 +7004,7 @@
         ['watch', "L'orologio", ['Un tocco sul quadrante lo gira: Woodenson ↔ Lotus.', 'Corona: mostra o nasconde la barra del cronometro. Pulsanti: START/STOP e LAP/0.', "Entrambi i quadranti segnano sempre l'ora reale."]],
         ['swipe', 'Le finestre', ['Dito su o giù sul calendario: apre o chiude le finestre.', 'Dito di lato: cambia finestra (o mese, nel calendario).', 'Meteo · Oggi · Sole e luna · Santo e ricorrenza · In arrivo · Aria · Sveglie · Radio · Notizie.']],
         ['cal', 'Il calendario', ['«Oggi» o doppio tocco sul titolo: torna al mese corrente.', 'Le feste si vedono solo in catalano.']],
-        ['moon', 'Temi e modalità Zz', ['Tasto del sole: automatico (A) → giorno → notte → Zz.', 'Zz: un tocco sul quadrante cambia colore (6 colori e 12 combinazioni di due colori con alone); doppio tocco: gira l\'orologio.', 'Dito su o giù sul quadrante (o rotellina): intensità del colore.']],
+        ['moon', 'Temi e modalità Zz', ['Tasto del sole: automatico (A) → giorno → notte → Zz.', 'Zz: un tocco sul quadrante cambia colore (6 colori e 18 combinazioni di due colori con alone); doppio tocco: gira l\'orologio.', 'Dito su o giù sul quadrante (o rotellina): intensità del colore.']],
         ['row', 'La barra in alto', ['Lingua: CA · FR · DE · IT · EN.', "Altoparlante: attiva o silenzia l'annuncio dell'ora.", 'Radio o podcast in ascolto: pausa e timer (15–90 min, volume che scende gradualmente).']],
         ['bell', 'Sveglie', ["Tocca l'ora e scegli i giorni.", "Suonano con l'app aperta."]],
         ['radio', 'Radio e notizie', ['Emittenti e notizie della lingua scelta.']],
@@ -6985,7 +7014,7 @@
         ['watch', 'The watch', ['Tap the dial to flip it: Woodenson ↔ Lotus.', 'Crown: show or hide the stopwatch bar. Pushers: START/STOP and LAP/0.', 'Both dials always show the real time.']],
         ['swipe', 'The panels', ['Finger up or down on the calendar: open or close the panels.', 'Finger sideways: change panel (or month, on the calendar).', 'Weather · Today · Sun and moon · Saint and history · Coming up · Air · Alarms · Radio · News.']],
         ['cal', 'The calendar', ['“Today” or double-tap the title: back to the current month.', 'Holidays are shown in Catalan only.']],
-        ['moon', 'Themes and Zz mode', ['Sun button: automatic (A) → day → night → Zz.', 'Zz: tap the dial to change colour (6 colours and 12 two-colour combinations with a halo); double-tap flips the watch.', 'Finger up or down on the dial (or mouse wheel): colour intensity.']],
+        ['moon', 'Themes and Zz mode', ['Sun button: automatic (A) → day → night → Zz.', 'Zz: tap the dial to change colour (6 colours and 18 two-colour combinations with a halo); double-tap flips the watch.', 'Finger up or down on the dial (or mouse wheel): colour intensity.']],
         ['row', 'The top bar', ['Language: CA · FR · DE · IT · EN.', 'Speaker: turns the on-the-hour announcement on or off.', 'While radio or a podcast plays: pause and sleep timer (15–90 min, volume fades out gradually).']],
         ['bell', 'Alarms', ['Tap the time and pick the days.', 'They ring while the app is open.']],
         ['radio', 'Radio and news', ['Stations and news in the chosen language.']],
