@@ -2932,7 +2932,7 @@
     html[data-theme="zz"] .dialeg { z-index: 1100; }
     /* Zz de dos colors: halo de llum a la vora de l'esfera; el filtre el pinta amb el color de l'halo */
     .zz-halo { display: none; }
-    /* Halo dels tons de dos colors: capa fora del filtre, amb el color de les agulles.
+    /* Halo dels tons de dos colors: capa fora del filtre, amb el contracolor (el de la temperatura gran).
        Neix a la vora del rellotge i s'apaga lentament cap a l'esfera; s'amaga mentre gira. */
     .watch-flip-wrap { position: relative; }
     .zz-glow { display: none; }
@@ -6851,7 +6851,7 @@
       if (duo) {
         // Dos colors: negre → color de l'halo (tons mitjos) → color principal (clars)
         const A = ZZ_TINTS[duo[0]], B = ZZ_TINTS[duo[1]];
-        document.documentElement.style.setProperty('--zz-glow', A.join(','));
+        document.documentElement.style.setProperty('--zz-glow', B.join(','));   // contracolor (el de la temperatura gran)
         ['R', 'G', 'B'].forEach((ch, k) => {
           const f = document.querySelector('#zz-tint-duo feFunc' + ch);
           if (f) f.setAttribute('tableValues', `0 ${(B[k] / 255 * 0.8).toFixed(3)} ${(A[k] / 255).toFixed(3)}`);
