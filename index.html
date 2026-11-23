@@ -2982,6 +2982,21 @@
     /* El bisell taquimètric és la vora exterior: la caixa de sota és negra i el vidre cobreix l'esfera */
     .glass-wood { inset: 9.6%; }
     .glass-lotus { inset: 11.7%; }
+    /* Hora en text: càpsula sobre la vora inferior del rellotge, amb el color del tema; s'esvaeix als 3 s */
+    .hora-text {
+      position: absolute; left: 50%; bottom: 1.5%; z-index: 60; pointer-events: none;
+      transform: translate(-50%, 8px); max-width: 94%; width: max-content;
+      padding: .55em 1.25em; border-radius: 999px; text-align: center;
+      font-weight: 700; font-size: clamp(14px, 4.2vmin, 22px); line-height: 1.25;
+      background: var(--accent); color: var(--accent-text);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .28), 0 0 0 1px rgba(255, 255, 255, .08) inset;
+      opacity: 0; transition: opacity .35s ease, transform .35s ease;
+    }
+    .hora-text.visible { opacity: 1; transform: translate(-50%, 0); }
+    .hora-text.fora { opacity: 0; transform: translate(-50%, 0); transition: opacity .8s ease; }
+    html[data-theme="zz"] .hora-text {
+      background: #000; color: var(--accent); box-shadow: 0 0 0 1.5px var(--accent), 0 0 18px rgba(0, 0, 0, .9);
+    }
 </style>
 </head>
 <body translate="no">
@@ -6303,35 +6318,80 @@
       return `${left === 1 ? 'Falta' : 'Falten'} ${caMinutes(left)} ${target} ${caPart(next)}.`;
     }
 
+    // Nombres en lletres (1-59) per a cada idioma: l'hora es diu i s'escriu sense xifres
+    const NUM_WORDS = {
+      fr(n) {
+        const u = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
+        if (n < 20) return u[n];
+        const t = ['', '', 'vingt', 'trente', 'quarante', 'cinquante'][Math.floor(n / 10)], r = n % 10;
+        return r === 0 ? t : r === 1 ? `${t} et un` : `${t}-${u[r]}`;
+      },
+      de(n) {
+        const u = ['', 'eins', 'zwei', 'drei', 'vier', 'fünf', 'sechs', 'sieben', 'acht', 'neun', 'zehn', 'elf', 'zwölf', 'dreizehn', 'vierzehn', 'fünfzehn', 'sechzehn', 'siebzehn', 'achtzehn', 'neunzehn'];
+        if (n < 20) return u[n];
+        const t = ['', '', 'zwanzig', 'dreißig', 'vierzig', 'fünfzig'][Math.floor(n / 10)], r = n % 10;
+        return r === 0 ? t : `${r === 1 ? 'ein' : u[r]}und${t}`;
+      },
+      it(n) {
+        const u = ['', 'uno', 'due', 'tre', 'quattro', 'cinque', 'sei', 'sette', 'otto', 'nove', 'dieci', 'undici', 'dodici', 'tredici', 'quattordici', 'quindici', 'sedici', 'diciassette', 'diciotto', 'diciannove'];
+        if (n < 20) return u[n];
+        let t = ['', '', 'venti', 'trenta', 'quaranta', 'cinquanta'][Math.floor(n / 10)];
+        const r = n % 10;
+        if (r === 0) return t;
+        if (r === 1 || r === 8) t = t.slice(0, -1);
+        return t + (r === 3 ? 'tré' : u[r]);
+      },
+      en(n) {
+        const u = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+        if (n < 20) return u[n];
+        const t = ['', '', 'twenty', 'thirty', 'forty', 'fifty'][Math.floor(n / 10)], r = n % 10;
+        return r === 0 ? t : `${t}-${u[r]}`;
+      }
+    };
+
     const TIME_PHRASES = {
       ca: catalanTime,
       fr(h, m) {
-        const name = x => (x === 0 ? 'minuit' : x === 12 ? 'midi' : `${['', 'une', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix', 'onze'][x % 12]} heure${x % 12 === 1 ? '' : 's'}`);
+        const N = NUM_WORDS.fr;
+        const name = x => (x === 0 ? 'minuit' : x === 12 ? 'midi' : `${x % 12 === 1 ? 'une' : N(x % 12)} heure${x % 12 === 1 ? '' : 's'}`);
         const part = x => (x === 0 || x === 12 ? '' : x < 12 ? ' du matin' : x <= 17 ? ' de l\'après-midi' : ' du soir');
         if (m === 0) return `Il est ${name(h)}${part(h)}.`;
         if (m === 15) return `Il est ${name(h)} et quart${part(h)}.`;
         if (m === 30) return `Il est ${name(h)} et demie${part(h)}.`;
         if (m >= 35 && m % 5 === 0) {
           const n = (h + 1) % 24;
-          return `Il est ${name(n)} moins ${m === 45 ? 'le quart' : 60 - m}${part(n)}.`;
+          return `Il est ${name(n)} moins ${m === 45 ? 'le quart' : N(60 - m)}${part(n)}.`;
         }
-        return `Il est ${name(h)} ${m}${part(h)}.`;
+        return `Il est ${name(h)} ${N(m)}${part(h)}.`;
       },
       de(h, m) {
+        const N = NUM_WORDS.de;
+        const hw = x => (x % 12 === 1 ? 'eins' : x % 12 === 0 ? 'zwölf' : N(x % 12));
+        const part = x => (x <= 4 || x >= 22 ? ' in der Nacht' : x <= 10 ? ' am Morgen' : x <= 13 ? ' am Mittag' : x <= 17 ? ' am Nachmittag' : ' am Abend');
         if (m === 0) return HOUR_PHRASES.de(h).replace(/^[^!]*! /, '');
-        return `Es ist ${h} Uhr ${m}.`;
+        const n = (h + 1) % 24;
+        if (m === 15) return `Es ist Viertel nach ${hw(h)}${part(h)}.`;
+        if (m === 30) return `Es ist halb ${hw(n)}${part(n)}.`;
+        if (m === 45) return `Es ist Viertel vor ${hw(n)}${part(n)}.`;
+        if (m === 25) return `Es ist fünf vor halb ${hw(n)}${part(n)}.`;
+        if (m === 35) return `Es ist fünf nach halb ${hw(n)}${part(n)}.`;
+        if (m % 5 === 0) return m < 30 ? `Es ist ${N(m)} nach ${hw(h)}${part(h)}.` : `Es ist ${N(60 - m)} vor ${hw(n)}${part(n)}.`;
+        return `Es ist ${hw(h) === 'eins' ? 'ein' : hw(h)} Uhr ${N(m)}${part(h)}.`;
       },
       it(h, m) {
-        const name = x => (x === 0 ? 'mezzanotte' : x === 12 ? 'mezzogiorno' : x % 12 === 1 ? "l'una" : `le ${['', 'una', 'due', 'tre', 'quattro', 'cinque', 'sei', 'sette', 'otto', 'nove', 'dieci', 'undici'][x % 12]}`);
+        const N = NUM_WORDS.it;
+        const name = x => (x === 0 ? 'mezzanotte' : x === 12 ? 'mezzogiorno' : x % 12 === 1 ? "l'una" : `le ${N(x % 12)}`);
         const verb = x => (x === 0 || x === 12 || x % 12 === 1 ? 'È' : 'Sono');
         const part = x => (x === 0 || x === 12 ? '' : x <= 4 ? ' di notte' : x <= 11 ? ' del mattino' : x <= 17 ? ' del pomeriggio' : x <= 22 ? ' di sera' : ' di notte');
         if (m === 0) return `${verb(h)} ${name(h)}${part(h)}.`;
         if (m === 45) { const n = (h + 1) % 24; return `${verb(n)} ${name(n)} meno un quarto${part(n)}.`; }
-        const tail = m === 15 ? 'e un quarto' : m === 30 ? 'e mezza' : `e ${m}`;
+        const tail = m === 15 ? 'e un quarto' : m === 30 ? 'e mezza' : `e ${N(m)}`;
         return `${verb(h)} ${name(h)} ${tail}${part(h)}.`;
       },
       en(h, m) {
-        const w = x => (x === 0 ? 'midnight' : x === 12 ? 'noon' : ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven'][x % 12]);
+        const N = NUM_WORDS.en;
+        const w = x => (x === 0 ? 'midnight' : x === 12 ? 'noon' : N(x % 12));
+        const h12 = x => N(x % 12 || 12);
         const part = x => (x === 0 || x === 12 ? '' : x <= 4 ? ' at night' : x <= 11 ? ' in the morning' : x <= 17 ? ' in the afternoon' : x <= 21 ? ' in the evening' : ' at night');
         if (m === 0) return HOUR_PHRASES.en(h).replace(/^[^!]*! /, '');
         if (m % 5 === 0) {
@@ -6340,7 +6400,8 @@
           const n = (h + 1) % 24;
           return `It's ${words[60 - m]} to ${w(n)}${part(n)}.`;
         }
-        return `It's ${h % 12 || 12}:${String(m).padStart(2, '0')}${part(h)}.`;
+        const part2 = x => (x === 0 ? ' at night' : x === 12 ? ' in the afternoon' : part(x));
+        return `It's ${h12(h)} ${m < 10 ? 'oh ' : ''}${N(m)}${part2(h)}.`;
       }
     };
 
@@ -6373,6 +6434,27 @@
              voices.find(v => norm(v).startsWith(base)) || null;
     }
     if (synth && 'onvoiceschanged' in synth) synth.onvoiceschanged = () => {};
+
+    // Mostra la frase de l'hora sobre el rellotge i l'esvaeix al cap de 3 segons
+    let horaEl = null, horaT1 = 0, horaT2 = 0;
+    function showTimeText(text) {
+      const wrap = document.querySelector('.watch-flip-wrap');
+      if (!wrap || !text) return;
+      if (!horaEl) {
+        horaEl = document.createElement('div');
+        horaEl.className = 'hora-text';
+        horaEl.setAttribute('role', 'status');
+        horaEl.setAttribute('aria-live', 'polite');
+        wrap.appendChild(horaEl);
+      }
+      clearTimeout(horaT1); clearTimeout(horaT2);
+      horaEl.textContent = text;
+      horaEl.classList.remove('fora', 'visible');
+      void horaEl.offsetWidth;
+      horaEl.classList.add('visible');
+      horaT1 = setTimeout(() => { horaEl.classList.add('fora'); }, 3000);
+      horaT2 = setTimeout(() => { horaEl.classList.remove('visible', 'fora'); }, 3900);
+    }
 
     function speak(text) {
       if (!synth || !text) return;
@@ -6421,7 +6503,7 @@
       if (alarmDueNow(date)) return;   // si sona una alarma, ja diu l'hora ella
       const text = hourAnnouncement(date);
       const wait = chime();
-      setTimeout(() => speak(text), wait);
+      setTimeout(() => { speak(text); showTimeText(timeAnnouncement(date)); }, wait);
     }
 
     // Safari demana un primer gest de l'usuari per poder parlar i fer sonar el ding-dong
@@ -6479,7 +6561,9 @@
         return;
       }
       if (!voiceEnabled) setVoiceEnabled(true);
-      speak(timeAnnouncement(new Date()));
+      const frase = timeAnnouncement(new Date());
+      speak(frase);
+      showTimeText(frase);
     });
 
     // ------------------------------------------------------------------
@@ -6844,7 +6928,7 @@
     // Combinacions de dos colors [agulles i marques, halo i contracolor], triades del catàleg
     const ZZ_DUOS = {};
     [['orange', 'cyan'], ['orange', 'blue'], ['orange', 'violet'], ['red', 'violet'],
-     ['yellow', 'green'], ['yellow', 'cyan'], ['yellow', 'blue'], ['yellow', 'violet'],
+     ['yellow', 'green'], ['yellow', 'cyan'], ['yellow', 'blue'], ['yellow', 'violet'], ['yellow', 'lume'],
      ['lume', 'red'], ['lume', 'green'], ['lume', 'cyan'], ['lume', 'blue'], ['lume', 'violet'],
      ['green', 'red'], ['green', 'cyan'], ['green', 'blue'], ['green', 'violet'], ['cyan', 'green']]
       .forEach(([a, b]) => { ZZ_DUOS[`duo-${a}-${b}`] = [a, b]; });
@@ -6974,7 +7058,7 @@
         ['watch', 'El rellotge', ["Un toc a l'esfera la gira: Woodenson ↔ Lotus.", 'Corona: mostra o amaga la barra del cronòmetre. Polsadors: START/STOP i LAP/0.', 'Les dues esferes marquen sempre l\'hora real.']],
         ['swipe', 'Les finestres', ['Dit amunt o avall al calendari: obre o tanca les finestres.', 'Dit de costat: canvia de finestra (o de mes, al calendari).', 'Previsió del temps · Avui · Sol i lluna · Sant i efemèride · Properament · Aire · Alarmes · Ràdio · Podcasts · Notícies.']],
         ['cal', 'El calendari', ['Festius en vermell: toca\'ls per veure\'n el nom.', '«Avui» o doble toc al títol: torna al mes actual.', 'Les festes, només en català (amb les locals del municipi).']],
-        ['moon', 'Temes i mode Zz', ['Botó del sol: automàtic (A) → dia → nit → Zz.', 'Zz: un toc a l\'esfera canvia el color (6 colors i 18 combinacions de dos colors amb halo); doble toc: gira el rellotge.', 'Dit amunt o avall damunt l\'esfera (o la roda del ratolí): intensitat del color.']],
+        ['moon', 'Temes i mode Zz', ['Botó del sol: automàtic (A) → dia → nit → Zz.', 'Zz: un toc a l\'esfera canvia el color (6 colors i 19 combinacions de dos colors amb halo); doble toc: gira el rellotge.', 'Dit amunt o avall damunt l\'esfera (o la roda del ratolí): intensitat del color.']],
         ['row', 'La barra de dalt', ['Idioma: CA · FR · DE · IT · EN.', 'Altaveu: activa o silencia l\'anunci de l\'hora en punt.', 'Quan sona la ràdio o un podcast, «Ara sona»: pausa i temporitzador (15–90 min, amb baixada gradual del volum).']],
         ['bell', 'Alarmes', ['Toca l\'hora per canviar-la i tria els dies.', 'Sonen amb l\'app oberta.']],
         ['radio', 'Ràdio, podcasts i notícies', ['Emissores i notícies de l\'idioma triat.', 'Podcasts de RAC1 (en català).']],
@@ -6984,7 +7068,7 @@
         ['watch', 'La montre', ['Touchez le cadran pour le retourner : Woodenson ↔ Lotus.', 'Couronne : affiche ou masque la barre du chronomètre. Poussoirs : START/STOP et LAP/0.', 'Les deux cadrans indiquent toujours l\'heure réelle.']],
         ['swipe', 'Les fenêtres', ['Doigt vers le haut ou le bas sur le calendrier : ouvre ou ferme les fenêtres.', 'Doigt sur le côté : change de fenêtre (ou de mois, au calendrier).', 'Météo · Aujourd\'hui · Soleil et lune · Saint et éphéméride · À venir · Air · Réveils · Radio · Actualités.']],
         ['cal', 'Le calendrier', ['« Auj. » ou double toucher sur le titre : retour au mois actuel.', 'Les jours fériés ne s\'affichent qu\'en catalan.']],
-        ['moon', 'Thèmes et mode Zz', ['Bouton soleil : automatique (A) → jour → nuit → Zz.', 'Zz : un toucher sur le cadran change la couleur (6 couleurs et 18 combinaisons de deux couleurs avec halo) ; double toucher : retourne la montre.', 'Doigt vers le haut ou le bas sur le cadran (ou molette) : intensité de la couleur.']],
+        ['moon', 'Thèmes et mode Zz', ['Bouton soleil : automatique (A) → jour → nuit → Zz.', 'Zz : un toucher sur le cadran change la couleur (6 couleurs et 19 combinaisons de deux couleurs avec halo) ; double toucher : retourne la montre.', 'Doigt vers le haut ou le bas sur le cadran (ou molette) : intensité de la couleur.']],
         ['row', 'La barre du haut', ['Langue : CA · FR · DE · IT · EN.', 'Haut-parleur : active ou coupe l\'annonce de l\'heure.', 'Radio ou podcast en cours : pause et minuterie (15–90 min, volume baissé progressivement).']],
         ['bell', 'Réveils', ['Touchez l\'heure et choisissez les jours.', 'Ils sonnent avec l\'app ouverte.']],
         ['radio', 'Radio et actualités', ['Stations et actualités de la langue choisie.']],
@@ -6994,7 +7078,7 @@
         ['watch', 'Die Uhr', ['Ein Tippen auf das Zifferblatt dreht es: Woodenson ↔ Lotus.', 'Krone: Stoppuhr-Leiste ein- oder ausblenden. Drücker: START/STOPP und LAP/0.', 'Beide Zifferblätter zeigen immer die echte Zeit.']],
         ['swipe', 'Die Fenster', ['Finger nach oben oder unten auf dem Kalender: Fenster öffnen oder schließen.', 'Finger zur Seite: nächstes Fenster (oder Monat im Kalender).', 'Wetter · Heute · Sonne und Mond · Heilige und Chronik · Demnächst · Luft · Wecker · Radio · Nachrichten.']],
         ['cal', 'Der Kalender', ['„Heute“ oder Doppeltippen auf den Titel: zurück zum aktuellen Monat.', 'Feiertage werden nur auf Katalanisch angezeigt.']],
-        ['moon', 'Modi und Zz-Modus', ['Sonnen-Taste: automatisch (A) → Tag → Nacht → Zz.', 'Zz: Tippen auf das Zifferblatt wechselt die Farbe (6 Farben und 18 Zweifarben-Kombinationen mit Lichthof); Doppeltippen dreht die Uhr.', 'Finger nach oben oder unten auf dem Zifferblatt (oder Mausrad): Farbintensität.']],
+        ['moon', 'Modi und Zz-Modus', ['Sonnen-Taste: automatisch (A) → Tag → Nacht → Zz.', 'Zz: Tippen auf das Zifferblatt wechselt die Farbe (6 Farben und 19 Zweifarben-Kombinationen mit Lichthof); Doppeltippen dreht die Uhr.', 'Finger nach oben oder unten auf dem Zifferblatt (oder Mausrad): Farbintensität.']],
         ['row', 'Die obere Leiste', ['Sprache: CA · FR · DE · IT · EN.', 'Lautsprecher: Zeitansage zur vollen Stunde ein- oder ausschalten.', 'Läuft Radio oder Podcast: Pause und Sleep-Timer (15–90 Min., Lautstärke sinkt langsam).']],
         ['bell', 'Wecker', ['Uhrzeit antippen und Tage wählen.', 'Sie klingeln bei geöffneter App.']],
         ['radio', 'Radio und Nachrichten', ['Sender und Nachrichten der gewählten Sprache.']],
@@ -7004,7 +7088,7 @@
         ['watch', "L'orologio", ['Un tocco sul quadrante lo gira: Woodenson ↔ Lotus.', 'Corona: mostra o nasconde la barra del cronometro. Pulsanti: START/STOP e LAP/0.', "Entrambi i quadranti segnano sempre l'ora reale."]],
         ['swipe', 'Le finestre', ['Dito su o giù sul calendario: apre o chiude le finestre.', 'Dito di lato: cambia finestra (o mese, nel calendario).', 'Meteo · Oggi · Sole e luna · Santo e ricorrenza · In arrivo · Aria · Sveglie · Radio · Notizie.']],
         ['cal', 'Il calendario', ['«Oggi» o doppio tocco sul titolo: torna al mese corrente.', 'Le feste si vedono solo in catalano.']],
-        ['moon', 'Temi e modalità Zz', ['Tasto del sole: automatico (A) → giorno → notte → Zz.', 'Zz: un tocco sul quadrante cambia colore (6 colori e 18 combinazioni di due colori con alone); doppio tocco: gira l\'orologio.', 'Dito su o giù sul quadrante (o rotellina): intensità del colore.']],
+        ['moon', 'Temi e modalità Zz', ['Tasto del sole: automatico (A) → giorno → notte → Zz.', 'Zz: un tocco sul quadrante cambia colore (6 colori e 19 combinazioni di due colori con alone); doppio tocco: gira l\'orologio.', 'Dito su o giù sul quadrante (o rotellina): intensità del colore.']],
         ['row', 'La barra in alto', ['Lingua: CA · FR · DE · IT · EN.', "Altoparlante: attiva o silenzia l'annuncio dell'ora.", 'Radio o podcast in ascolto: pausa e timer (15–90 min, volume che scende gradualmente).']],
         ['bell', 'Sveglie', ["Tocca l'ora e scegli i giorni.", "Suonano con l'app aperta."]],
         ['radio', 'Radio e notizie', ['Emittenti e notizie della lingua scelta.']],
@@ -7014,7 +7098,7 @@
         ['watch', 'The watch', ['Tap the dial to flip it: Woodenson ↔ Lotus.', 'Crown: show or hide the stopwatch bar. Pushers: START/STOP and LAP/0.', 'Both dials always show the real time.']],
         ['swipe', 'The panels', ['Finger up or down on the calendar: open or close the panels.', 'Finger sideways: change panel (or month, on the calendar).', 'Weather · Today · Sun and moon · Saint and history · Coming up · Air · Alarms · Radio · News.']],
         ['cal', 'The calendar', ['“Today” or double-tap the title: back to the current month.', 'Holidays are shown in Catalan only.']],
-        ['moon', 'Themes and Zz mode', ['Sun button: automatic (A) → day → night → Zz.', 'Zz: tap the dial to change colour (6 colours and 18 two-colour combinations with a halo); double-tap flips the watch.', 'Finger up or down on the dial (or mouse wheel): colour intensity.']],
+        ['moon', 'Themes and Zz mode', ['Sun button: automatic (A) → day → night → Zz.', 'Zz: tap the dial to change colour (6 colours and 19 two-colour combinations with a halo); double-tap flips the watch.', 'Finger up or down on the dial (or mouse wheel): colour intensity.']],
         ['row', 'The top bar', ['Language: CA · FR · DE · IT · EN.', 'Speaker: turns the on-the-hour announcement on or off.', 'While radio or a podcast plays: pause and sleep timer (15–90 min, volume fades out gradually).']],
         ['bell', 'Alarms', ['Tap the time and pick the days.', 'They ring while the app is open.']],
         ['radio', 'Radio and news', ['Stations and news in the chosen language.']],
