@@ -6978,11 +6978,15 @@
       }
       applyZzLum();
     }
-    function cycleZzTint() {
-      zzTint = ZZ_ORDER[(ZZ_ORDER.indexOf(zzTint) + 1) % ZZ_ORDER.length];
+    function stepZzTint(dir) {
+      const n = ZZ_ORDER.length;
+      const i = (ZZ_ORDER.indexOf(zzTint) + dir + n) % n;
+      zzTint = ZZ_ORDER[i];
       try { localStorage.setItem(ZZ_KEY, zzTint); } catch (e) {}
       applyZzTint();
+      showToast(`${i + 1} / ${n}`, 900);
     }
+    function cycleZzTint() { stepZzTint(1); }
     // Intensitat de cada color (de 25% a 100%): lliscar el dit amunt o avall damunt
     // l'esfera (o la roda del ratolí). S'aplica igual a tota la pantalla.
     const ZZ_LUM_KEY = 'wdlt_zz_lum';
@@ -7004,34 +7008,43 @@
     (() => {
       const wf = document.getElementById('watchFlip');
       const isZz = () => document.documentElement.getAttribute('data-theme') === 'zz';
-      let tapTimer = null;
+      // Zz: un toc gira el rellotge (com als altres temes); lliscar de costat canvia el color;
+      // lliscar amunt o avall en canvia la intensitat
       wf.addEventListener('click', (e) => {
         if (!e.isTrusted || !isZz()) return;
-        if (e.target.closest('.pusher, .crown')) return;
-        e.stopImmediatePropagation();
-        if (window.__zzDragged && Date.now() - window.__zzDragged < 450) return;   // era un gest d'intensitat
-        if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; wf.click(); return; }
-        tapTimer = setTimeout(() => { tapTimer = null; cycleZzTint(); }, 300);
+        if (window.__zzDragged && Date.now() - window.__zzDragged < 450) {   // era un gest, no un toc
+          e.stopImmediatePropagation(); e.preventDefault();
+        }
       }, true);
-      let start = null, dragging = false;
-      function begin(y) { if (!isZz()) return; start = { y, lum: lumFor(zzTint) }; dragging = false; }
-      function move(y, e) {
+      let start = null, axis = null;
+      function begin(x, y, target) {
+        if (!isZz() || (target && target.closest && target.closest('.pusher, .crown'))) return;
+        start = { x, y, lum: lumFor(zzTint) }; axis = null;
+      }
+      function move(x, y, e) {
         if (!start) return;
-        const dy = y - start.y;
-        if (!dragging && Math.abs(dy) > 8) dragging = true;
-        if (dragging) { setZzLum(start.lum - dy / 260); if (e && e.cancelable) e.preventDefault(); }
+        const dx = x - start.x, dy = y - start.y;
+        if (!axis && Math.max(Math.abs(dx), Math.abs(dy)) > 10) axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+        if (axis && e && e.cancelable) e.preventDefault();
+        if (axis === 'y') setZzLum(start.lum - dy / 260);
       }
-      function end() {
-        if (dragging) { window.__zzDragged = Date.now(); saveZzLum(); }
-        start = null; dragging = false;
+      function end(x) {
+        if (!start) return;
+        if (axis) window.__zzDragged = Date.now();
+        if (axis === 'y') saveZzLum();
+        if (axis === 'x') {
+          const dx = x - start.x;
+          if (Math.abs(dx) > 36) stepZzTint(dx < 0 ? 1 : -1);    // cap a l'esquerra: següent; cap a la dreta: anterior
+        }
+        start = null; axis = null;
       }
-      wf.addEventListener('touchstart', (e) => begin(e.touches[0].clientY), { passive: true });
-      wf.addEventListener('touchmove', (e) => move(e.touches[0].clientY, e), { passive: false });
-      wf.addEventListener('touchend', end);
-      wf.addEventListener('touchcancel', end);
-      wf.addEventListener('mousedown', (e) => begin(e.clientY));
-      window.addEventListener('mousemove', (e) => { if (start) move(e.clientY, e); });
-      window.addEventListener('mouseup', () => { if (start) end(); });
+      wf.addEventListener('touchstart', (e) => { const t = e.touches[0]; begin(t.clientX, t.clientY, e.target); }, { passive: true });
+      wf.addEventListener('touchmove', (e) => { const t = e.touches[0]; move(t.clientX, t.clientY, e); }, { passive: false });
+      wf.addEventListener('touchend', (e) => { const t = e.changedTouches[0]; end(t ? t.clientX : 0); });
+      wf.addEventListener('touchcancel', () => { start = null; axis = null; });
+      wf.addEventListener('mousedown', (e) => { if (isZz()) e.preventDefault(); begin(e.clientX, e.clientY, e.target); });   // sense selecció ni arrossegament de text
+      window.addEventListener('mousemove', (e) => { if (start) move(e.clientX, e.clientY, e); });
+      window.addEventListener('mouseup', (e) => { if (start) end(e.clientX); });
       let wheelSave = null;
       wf.addEventListener('wheel', (e) => {
         if (!isZz()) return;
@@ -7058,7 +7071,7 @@
         ['watch', 'El rellotge', ["Un toc a l'esfera la gira: Woodenson ↔ Lotus.", 'Corona: mostra o amaga la barra del cronòmetre. Polsadors: START/STOP i LAP/0.', 'Les dues esferes marquen sempre l\'hora real.']],
         ['swipe', 'Les finestres', ['Dit amunt o avall al calendari: obre o tanca les finestres.', 'Dit de costat: canvia de finestra (o de mes, al calendari).', 'Previsió del temps · Avui · Sol i lluna · Sant i efemèride · Properament · Aire · Alarmes · Ràdio · Podcasts · Notícies.']],
         ['cal', 'El calendari', ['Festius en vermell: toca\'ls per veure\'n el nom.', '«Avui» o doble toc al títol: torna al mes actual.', 'Les festes, només en català (amb les locals del municipi).']],
-        ['moon', 'Temes i mode Zz', ['Botó del sol: automàtic (A) → dia → nit → Zz.', 'Zz: un toc a l\'esfera canvia el color (6 colors i 19 combinacions de dos colors amb halo); doble toc: gira el rellotge.', 'Dit amunt o avall damunt l\'esfera (o la roda del ratolí): intensitat del color.']],
+        ['moon', 'Temes i mode Zz', ['Botó del sol: automàtic (A) → dia → nit → Zz.', 'Zz: lliscar el dit de costat damunt l\'esfera canvia el color (6 colors i 19 combinacions de dos colors amb halo): cap a l\'esquerra, el següent; cap a la dreta, l\'anterior. Un toc gira el rellotge.', 'Dit amunt o avall damunt l\'esfera (o la roda del ratolí): intensitat del color.']],
         ['row', 'La barra de dalt', ['Idioma: CA · FR · DE · IT · EN.', 'Altaveu: activa o silencia l\'anunci de l\'hora en punt.', 'Quan sona la ràdio o un podcast, «Ara sona»: pausa i temporitzador (15–90 min, amb baixada gradual del volum).']],
         ['bell', 'Alarmes', ['Toca l\'hora per canviar-la i tria els dies.', 'Sonen amb l\'app oberta.']],
         ['radio', 'Ràdio, podcasts i notícies', ['Emissores i notícies de l\'idioma triat.', 'Podcasts de RAC1 (en català).']],
@@ -7068,7 +7081,7 @@
         ['watch', 'La montre', ['Touchez le cadran pour le retourner : Woodenson ↔ Lotus.', 'Couronne : affiche ou masque la barre du chronomètre. Poussoirs : START/STOP et LAP/0.', 'Les deux cadrans indiquent toujours l\'heure réelle.']],
         ['swipe', 'Les fenêtres', ['Doigt vers le haut ou le bas sur le calendrier : ouvre ou ferme les fenêtres.', 'Doigt sur le côté : change de fenêtre (ou de mois, au calendrier).', 'Météo · Aujourd\'hui · Soleil et lune · Saint et éphéméride · À venir · Air · Réveils · Radio · Actualités.']],
         ['cal', 'Le calendrier', ['« Auj. » ou double toucher sur le titre : retour au mois actuel.', 'Les jours fériés ne s\'affichent qu\'en catalan.']],
-        ['moon', 'Thèmes et mode Zz', ['Bouton soleil : automatique (A) → jour → nuit → Zz.', 'Zz : un toucher sur le cadran change la couleur (6 couleurs et 19 combinaisons de deux couleurs avec halo) ; double toucher : retourne la montre.', 'Doigt vers le haut ou le bas sur le cadran (ou molette) : intensité de la couleur.']],
+        ['moon', 'Thèmes et mode Zz', ['Bouton soleil : automatique (A) → jour → nuit → Zz.', 'Zz : glisser le doigt sur le côté sur le cadran change la couleur (6 couleurs et 19 combinaisons de deux couleurs avec halo) : vers la gauche, la suivante ; vers la droite, la précédente. Un toucher retourne la montre.', 'Doigt vers le haut ou le bas sur le cadran (ou molette) : intensité de la couleur.']],
         ['row', 'La barre du haut', ['Langue : CA · FR · DE · IT · EN.', 'Haut-parleur : active ou coupe l\'annonce de l\'heure.', 'Radio ou podcast en cours : pause et minuterie (15–90 min, volume baissé progressivement).']],
         ['bell', 'Réveils', ['Touchez l\'heure et choisissez les jours.', 'Ils sonnent avec l\'app ouverte.']],
         ['radio', 'Radio et actualités', ['Stations et actualités de la langue choisie.']],
@@ -7078,7 +7091,7 @@
         ['watch', 'Die Uhr', ['Ein Tippen auf das Zifferblatt dreht es: Woodenson ↔ Lotus.', 'Krone: Stoppuhr-Leiste ein- oder ausblenden. Drücker: START/STOPP und LAP/0.', 'Beide Zifferblätter zeigen immer die echte Zeit.']],
         ['swipe', 'Die Fenster', ['Finger nach oben oder unten auf dem Kalender: Fenster öffnen oder schließen.', 'Finger zur Seite: nächstes Fenster (oder Monat im Kalender).', 'Wetter · Heute · Sonne und Mond · Heilige und Chronik · Demnächst · Luft · Wecker · Radio · Nachrichten.']],
         ['cal', 'Der Kalender', ['„Heute“ oder Doppeltippen auf den Titel: zurück zum aktuellen Monat.', 'Feiertage werden nur auf Katalanisch angezeigt.']],
-        ['moon', 'Modi und Zz-Modus', ['Sonnen-Taste: automatisch (A) → Tag → Nacht → Zz.', 'Zz: Tippen auf das Zifferblatt wechselt die Farbe (6 Farben und 19 Zweifarben-Kombinationen mit Lichthof); Doppeltippen dreht die Uhr.', 'Finger nach oben oder unten auf dem Zifferblatt (oder Mausrad): Farbintensität.']],
+        ['moon', 'Modi und Zz-Modus', ['Sonnen-Taste: automatisch (A) → Tag → Nacht → Zz.', 'Zz: seitliches Wischen auf dem Zifferblatt wechselt die Farbe (6 Farben und 19 Zweifarben-Kombinationen mit Lichthof): nach links die nächste, nach rechts die vorherige. Tippen dreht die Uhr.', 'Finger nach oben oder unten auf dem Zifferblatt (oder Mausrad): Farbintensität.']],
         ['row', 'Die obere Leiste', ['Sprache: CA · FR · DE · IT · EN.', 'Lautsprecher: Zeitansage zur vollen Stunde ein- oder ausschalten.', 'Läuft Radio oder Podcast: Pause und Sleep-Timer (15–90 Min., Lautstärke sinkt langsam).']],
         ['bell', 'Wecker', ['Uhrzeit antippen und Tage wählen.', 'Sie klingeln bei geöffneter App.']],
         ['radio', 'Radio und Nachrichten', ['Sender und Nachrichten der gewählten Sprache.']],
@@ -7088,7 +7101,7 @@
         ['watch', "L'orologio", ['Un tocco sul quadrante lo gira: Woodenson ↔ Lotus.', 'Corona: mostra o nasconde la barra del cronometro. Pulsanti: START/STOP e LAP/0.', "Entrambi i quadranti segnano sempre l'ora reale."]],
         ['swipe', 'Le finestre', ['Dito su o giù sul calendario: apre o chiude le finestre.', 'Dito di lato: cambia finestra (o mese, nel calendario).', 'Meteo · Oggi · Sole e luna · Santo e ricorrenza · In arrivo · Aria · Sveglie · Radio · Notizie.']],
         ['cal', 'Il calendario', ['«Oggi» o doppio tocco sul titolo: torna al mese corrente.', 'Le feste si vedono solo in catalano.']],
-        ['moon', 'Temi e modalità Zz', ['Tasto del sole: automatico (A) → giorno → notte → Zz.', 'Zz: un tocco sul quadrante cambia colore (6 colori e 19 combinazioni di due colori con alone); doppio tocco: gira l\'orologio.', 'Dito su o giù sul quadrante (o rotellina): intensità del colore.']],
+        ['moon', 'Temi e modalità Zz', ['Tasto del sole: automatico (A) → giorno → notte → Zz.', 'Zz: scorrere il dito di lato sul quadrante cambia colore (6 colori e 19 combinazioni di due colori con alone): verso sinistra il successivo, verso destra il precedente. Un tocco gira l\'orologio.', 'Dito su o giù sul quadrante (o rotellina): intensità del colore.']],
         ['row', 'La barra in alto', ['Lingua: CA · FR · DE · IT · EN.', "Altoparlante: attiva o silenzia l'annuncio dell'ora.", 'Radio o podcast in ascolto: pausa e timer (15–90 min, volume che scende gradualmente).']],
         ['bell', 'Sveglie', ["Tocca l'ora e scegli i giorni.", "Suonano con l'app aperta."]],
         ['radio', 'Radio e notizie', ['Emittenti e notizie della lingua scelta.']],
@@ -7098,7 +7111,7 @@
         ['watch', 'The watch', ['Tap the dial to flip it: Woodenson ↔ Lotus.', 'Crown: show or hide the stopwatch bar. Pushers: START/STOP and LAP/0.', 'Both dials always show the real time.']],
         ['swipe', 'The panels', ['Finger up or down on the calendar: open or close the panels.', 'Finger sideways: change panel (or month, on the calendar).', 'Weather · Today · Sun and moon · Saint and history · Coming up · Air · Alarms · Radio · News.']],
         ['cal', 'The calendar', ['“Today” or double-tap the title: back to the current month.', 'Holidays are shown in Catalan only.']],
-        ['moon', 'Themes and Zz mode', ['Sun button: automatic (A) → day → night → Zz.', 'Zz: tap the dial to change colour (6 colours and 19 two-colour combinations with a halo); double-tap flips the watch.', 'Finger up or down on the dial (or mouse wheel): colour intensity.']],
+        ['moon', 'Themes and Zz mode', ['Sun button: automatic (A) → day → night → Zz.', 'Zz: swipe sideways on the dial to change colour (6 colours and 19 two-colour combinations with a halo): left for the next, right for the previous. A tap flips the watch.', 'Finger up or down on the dial (or mouse wheel): colour intensity.']],
         ['row', 'The top bar', ['Language: CA · FR · DE · IT · EN.', 'Speaker: turns the on-the-hour announcement on or off.', 'While radio or a podcast plays: pause and sleep timer (15–90 min, volume fades out gradually).']],
         ['bell', 'Alarms', ['Tap the time and pick the days.', 'They ring while the app is open.']],
         ['radio', 'Radio and news', ['Stations and news in the chosen language.']],
