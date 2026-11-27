@@ -2997,16 +2997,72 @@
     html[data-theme="zz"] .hora-text {
       background: #000; color: var(--accent); box-shadow: 0 0 0 1.5px var(--accent), 0 0 18px rgba(0, 0, 0, .9);
     }
+    /* ------------------------------------------------------------------
+       Estructura del model: sense barra de dalt. Fila del títol amb ajuda, tema,
+       instal·lar i «Avui»; fila de baix amb idioma, població (o «Ara sona») i altaveu.
+       ------------------------------------------------------------------ */
+    :root { --top: 0px; }
+    @media (orientation: landscape) and (max-height: 620px) {
+      :root { --top: 0px; --side: max(12px, env(safe-area-inset-left)); }
+    }
+    #prev-month, #next-month { display: none; }
+    .calendar-header-actions { align-items: center; }
+    .calendar-header-actions .tb-btn, .calendar-header-actions .tb-btn.theme-toggle-btn { width: 36px; height: 36px; flex: none; }
+    .peu-fila {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      margin-top: 14px; min-width: 0;
+    }
+    .lang-tria { position: relative; flex: none; }
+    .peu-fila #lang-btn {
+      width: auto; min-width: 58px; height: 38px; padding: 0 16px; border-radius: 999px;
+      background: var(--accent); color: var(--accent-text); border-color: transparent;
+    }
+    #lang-menu { position: fixed !important; z-index: 1000; max-height: calc(100dvh - 24px); }
+    #lang-menu .lm-in { max-height: calc(100dvh - 34px); overflow: auto; }
+    .placa-lloc {
+      appearance: none; display: inline-flex; align-items: center; gap: 9px; min-width: 0; max-width: 62%;
+      height: 46px; padding: 0 18px 0 12px; border-radius: 16px; cursor: pointer;
+      border: 1.5px solid var(--btn-border); background: var(--btn-bg); color: var(--accent);
+      font: inherit; text-align: left;
+    }
+    .placa-lloc svg { width: 21px; height: 21px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .placa-lloc .pl-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.08; }
+    .placa-lloc .pl-etq { font-size: 10px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; opacity: .72; }
+    .placa-lloc .pl-val { font-size: 17px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .placa-lloc:active { transform: scale(.97); }
+    .peu-fila:has(#ara-sona-fila:not([hidden])) .placa-lloc { display: none; }
+    .peu-fila .ara-sona-fila { margin: 0; flex: 0 1 auto; min-width: 0; }
+    .peu-fila #veu-btn { flex: none; }
+    /* En Zz, com al model: fila del títol a dalt, la xifra al mig, la fila de baix al peu */
+    html[data-theme="zz"] .calendar-section { display: flex; flex-direction: column; }
+    html[data-theme="zz"] .calendar-header { order: 1; }
+    html[data-theme="zz"] .zz-temp { order: 2; }
+    html[data-theme="zz"] .peu-fila { order: 3; }
     /* Mode Zz: la targeta del calendari mostra només la temperatura (amb decimal) i la sensació */
     .zz-temp { display: none; }
-    html[data-theme="zz"] .calendar-section > :not(.zz-temp) { display: none !important; }
+    html[data-theme="zz"] #cal-views { display: none !important; }
+    .zz-title { display: none; }
+    html[data-theme="zz"] .calendar-header .month-year-title:not(.zz-title) { display: none; }
+    html[data-theme="zz"] .calendar-header .zz-title { display: block; color: var(--accent); }
+    /* Proporcions com al model Tissot: sense marc, títol a dalt, xifra molt gran i sensació entre parèntesis */
     html[data-theme="zz"] .zz-temp {
-      display: block; text-align: center; padding: 14px 6px 12px; color: var(--accent);
+      display: block; text-align: center; padding: 0 2px 4px; color: var(--accent);
       font-variant-numeric: tabular-nums;
     }
-    html[data-theme="zz"] .zz-temp b { display: block; font-size: 88px; font-weight: 800; line-height: 1; letter-spacing: -.03em; }
-    html[data-theme="zz"] .zz-temp span { display: block; margin-top: 10px; font-size: 18px; font-weight: 600; opacity: .85; }
-    html[data-theme="zz"] .calendar-section { box-shadow: 0 0 0 1.5px var(--accent); border-color: transparent; }
+    html[data-theme="zz"] .zz-temp i {
+      display: block; text-align: left; font-style: normal; font-size: 26px; font-weight: 700; letter-spacing: .01em;
+      margin: 0 0 2px 4px;
+    }
+    html[data-theme="zz"] .zz-temp b {
+      display: block; font-size: 172px; font-weight: 800; line-height: .98; letter-spacing: -.035em; white-space: nowrap;
+    }
+    html[data-theme="zz"] .zz-temp span {
+      display: block; margin-top: 6px; font-size: 42px; font-weight: 700; letter-spacing: -.01em; opacity: .62; white-space: nowrap;
+    }
+    html[data-theme="zz"] .calendar-section {
+      background: transparent; border-color: transparent; box-shadow: none;
+      -webkit-backdrop-filter: none; backdrop-filter: none;
+    }
     /* Mode Zz: les subesferes s'amaguen si el cronògraf no és obert ni en marxa */
     .sub-g { transition: opacity .45s ease; }
     html[data-theme="zz"]:not(.crono-on) .sub-g { opacity: 0; }
@@ -3014,28 +3070,6 @@
 </head>
 <body translate="no">
   <!-- Barra superior: idioma i veu · títol (o «ara sona») · instal·lar i tema -->
-  <header class="topbar">
-    <div class="tb-left">
-      <button type="button" class="tb-btn tb-lang" id="lang-btn" aria-haspopup="true" aria-expanded="false" data-i18n-aria="langGroup" aria-label="Idioma"><span id="lang-code">CA</span></button>
-      <button type="button" class="tb-btn" id="veu-btn" aria-pressed="true"></button>
-      <button type="button" class="tb-btn theme-toggle-btn" id="theme-toggle-btn" title="Canvia entre tema diürn i nocturn" data-i18n-aria="themeAria" aria-label="Tema diürn o nocturn"></button>
-      <button type="button" class="tb-btn theme-toggle-btn" id="install-btn" data-i18n-title="install" data-i18n-aria="install" title="Instal·la com a app" aria-label="Instal·la com a app" hidden>
-        <svg class="theme-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></svg>
-      </button>
-      <button type="button" class="tb-btn ajuda-btn" id="ajuda-btn" data-i18n-title="helpBtn" data-i18n-aria="helpBtn" title="Com funciona" aria-label="Com funciona">?</button>
-      <div class="lang-menu" id="lang-menu" role="menu" hidden><div class="lm-in" id="lang-list"></div></div>
-    </div>
-    <div class="tb-center" id="tb-center">
-      <div class="ara-sona-fila" id="ara-sona-fila" hidden>
-        <button type="button" class="ara-sona" id="ara-sona" data-i18n-aria="pausePlay" aria-label="Pausar o reprendre">
-          <span class="ara-sona-ic" id="ara-sona-ic"></span><span class="ara-sona-tx" id="ara-sona-tx"></span>
-        </button>
-        <button type="button" class="ara-sona sleep-btn" id="sleep-btn" data-i18n-aria="sleepAria" aria-label="Temporitzador d'apagada">
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 9.6A5.6 5.6 0 0 1 6.4 3a5.6 5.6 0 1 0 6.6 6.6z"/></svg><span id="sleep-tx">Off</span>
-        </button>
-      </div>
-    </div>
-  </header>
 
 
   <div class="app-container">
@@ -3098,10 +3132,16 @@
     <div class="calendar-section">
       <div class="zz-temp" id="zz-temp" aria-live="polite"><b id="zz-temp-n">–</b><span id="zz-temp-f"></span></div>
       <div class="calendar-header">
+        <div class="month-year-title zz-title" id="zz-temp-t" aria-hidden="true">Temperatura</div>
         <div class="month-year-title" id="month-year-title" data-i18n-title="titleDbl" title="Toca 2 cops per tornar al mes actual">Agost 2026</div>
         <div class="calendar-header-actions">
           <button type="button" class="chip-btn nav-btn" id="prev-month" data-i18n-aria="prevM" aria-label="Mes anterior">‹</button>
           <button type="button" class="chip-btn nav-btn" id="next-month" data-i18n-aria="nextM" aria-label="Mes següent">›</button>
+<button type="button" class="tb-btn ajuda-btn" id="ajuda-btn" data-i18n-title="helpBtn" data-i18n-aria="helpBtn" title="Com funciona" aria-label="Com funciona">?</button>
+          <button type="button" class="tb-btn theme-toggle-btn" id="theme-toggle-btn" title="Canvia entre tema diürn i nocturn" data-i18n-aria="themeAria" aria-label="Tema diürn o nocturn"></button>
+          <button type="button" class="tb-btn theme-toggle-btn" id="install-btn" data-i18n-title="install" data-i18n-aria="install" title="Instal·la com a app" aria-label="Instal·la com a app" hidden>
+        <svg class="theme-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></svg>
+      </button>
           <button type="button" class="calendar-today-btn" id="calendar-today-btn" data-i18n="today">Avui</button>
         </div>
       </div>
@@ -3278,6 +3318,26 @@
         </div>
       </div>
 
+          <!-- Fila de baix (com al model): idioma · població (o «Ara sona» quan sona la ràdio) · altaveu -->
+      <div class="peu-fila" id="peu-fila">
+        <div class="lang-tria">
+          <button type="button" class="tb-btn tb-lang" id="lang-btn" aria-haspopup="true" aria-expanded="false" data-i18n-aria="langGroup" aria-label="Idioma"><span id="lang-code">CA</span></button>
+          <div class="lang-menu" id="lang-menu" role="menu" hidden><div class="lm-in" id="lang-list"></div></div>
+        </div>
+        <button type="button" class="placa-lloc" id="placa-lloc" data-i18n-aria="plPoblacio" aria-label="Població">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-6.2-6.5-11A6.5 6.5 0 0 1 18.5 10c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>
+          <span class="pl-txt"><span class="pl-etq" data-i18n="plPoblacio">Població</span><span class="pl-val" id="pl-lloc">—</span></span>
+        </button>
+      <div class="ara-sona-fila" id="ara-sona-fila" hidden>
+        <button type="button" class="ara-sona" id="ara-sona" data-i18n-aria="pausePlay" aria-label="Pausar o reprendre">
+          <span class="ara-sona-ic" id="ara-sona-ic"></span><span class="ara-sona-tx" id="ara-sona-tx"></span>
+        </button>
+        <button type="button" class="ara-sona sleep-btn" id="sleep-btn" data-i18n-aria="sleepAria" aria-label="Temporitzador d'apagada">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 9.6A5.6 5.6 0 0 1 6.4 3a5.6 5.6 0 1 0 6.6 6.6z"/></svg><span id="sleep-tx">Off</span>
+        </button>
+      </div>
+        <button type="button" class="tb-btn" id="veu-btn" aria-pressed="true"></button>
+      </div>
     </div>
   </div>
 
@@ -3613,6 +3673,7 @@
     I18N.de.wxOffline = 'Keine Verbindung · neuer Versuch folgt';
     I18N.it.wxOffline = 'Nessuna connessione · nuovo tentativo a breve';
     I18N.en.wxOffline = 'No connection · will retry';
+    Object.assign(I18N.ca, { plPoblacio: 'Població' }); Object.assign(I18N.fr, { plPoblacio: 'Commune' }); Object.assign(I18N.de, { plPoblacio: 'Ort' }); Object.assign(I18N.it, { plPoblacio: 'Comune' }); Object.assign(I18N.en, { plPoblacio: 'Town' });
     I18N.ca.helpBtn = 'Com funciona'; I18N.ca.close = 'Tanca';
     I18N.fr.helpBtn = "Mode d'emploi"; I18N.fr.close = 'Fermer';
     I18N.de.helpBtn = 'So funktioniert es'; I18N.de.close = 'Schließen';
@@ -4681,12 +4742,25 @@
       if (!n || !fl) return;
       const c = lastWeather && lastWeather.current;
       const fmt = v => Number(v).toLocaleString(t('locale'), { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+      const tt = document.getElementById('zz-temp-t');
+      if (tt) tt.textContent = ({ ca: 'Temperatura', fr: 'Température', de: 'Temperatur', it: 'Temperatura', en: 'Temperature' })[currentLang] || 'Temperatura';
       if (c && c.temperature_2m != null) {
         n.textContent = `${fmt(c.temperature_2m)}°`;
-        fl.textContent = c.apparent_temperature != null ? `${t('feels')} ${fmt(c.apparent_temperature)}°` : '';
+        fl.textContent = c.apparent_temperature != null ? `(${t('feels').toLowerCase()} ${fmt(c.apparent_temperature)}°)` : '';
       } else {
         n.textContent = '–';
         fl.textContent = t('loadingWx');
+      }
+      fitZzTemp();
+    }
+    // La xifra es fa tan gran com pot sense sortir de l'amplada (p. ex. amb temperatures negatives)
+    function fitZzTemp() {
+      const box = document.getElementById('zz-temp');
+      if (!box || document.documentElement.getAttribute('data-theme') !== 'zz') return;
+      for (const el of [document.getElementById('zz-temp-n'), document.getElementById('zz-temp-f')]) {
+        el.style.fontSize = '';
+        const w = box.clientWidth - 4;
+        if (w > 0 && el.scrollWidth > w) el.style.fontSize = Math.floor(parseFloat(getComputedStyle(el).fontSize) * w / el.scrollWidth) + 'px';
       }
     }
     (() => {
@@ -4697,7 +4771,7 @@
         if (g) g.classList.add('sub-g');
       }
       // en canviar de tema, la targeta canvia d'alçada: es recalcula la mida del rellotge
-      new MutationObserver(() => { if (typeof scheduleFit === 'function') scheduleFit(0); })
+      new MutationObserver(() => { fitZzTemp(); if (typeof scheduleFit === 'function') scheduleFit(0); })
         .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     })();
 
@@ -6669,9 +6743,19 @@
       });
     }
 
+    // El menú penja del document (la targeta retalla) i s'obre cap amunt, damunt del botó
+    document.body.appendChild(langMenu);
     function openLangMenu(open) {
       if (open) paintLangMenu();
       langMenu.hidden = !open;
+      if (open) {
+        const r = langBtn.getBoundingClientRect();
+        const w = Math.min(320, innerWidth - 24);
+        langMenu.style.left = Math.max(12, Math.min(r.left, innerWidth - w - 12)) + 'px';
+        const up = r.top > innerHeight / 2;
+        langMenu.style.top = up ? 'auto' : (r.bottom + 8) + 'px';
+        langMenu.style.bottom = up ? (innerHeight - r.top + 8) + 'px' : 'auto';
+      }
       langBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
 
@@ -6685,7 +6769,7 @@
       openLangMenu(false);
     });
     document.addEventListener('pointerdown', (e) => {
-      if (!langMenu.hidden && !e.target.closest('.tb-left')) openLangMenu(false);
+      if (!langMenu.hidden && !e.target.closest('.lang-tria, #lang-menu')) openLangMenu(false);
     });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') openLangMenu(false); });
 
@@ -7099,6 +7183,21 @@
         clearTimeout(wheelSave);
         wheelSave = setTimeout(saveZzLum, 300);
       }, { passive: false });
+    })();
+
+    // ---- Placa de la població (fila de baix): segueix la ubicació detectada; en tocar-la, obre la finestra d'Ubicació
+    (() => {
+      const src = document.getElementById('data-location'), dst = document.getElementById('pl-lloc');
+      const sync = () => { const v = (src && !src.hasAttribute('data-i18n') && src.textContent || '').trim(); dst.textContent = v && v !== t('unknownLoc') ? v : '—'; };
+      if (src) new MutationObserver(sync).observe(src, { childList: true, characterData: true, subtree: true });
+      sync();
+      document.getElementById('placa-lloc').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (document.documentElement.getAttribute('data-theme') === 'zz') return;
+        setWeatherView(true);
+        const i = finPages().findIndex(p => p.dataset.key === 'ubicacio');
+        if (i >= 0) setTimeout(() => goToFinPage(i, true), 30);
+      });
     })();
 
     // ---- Ajuda: botó «?» de la barra ----
